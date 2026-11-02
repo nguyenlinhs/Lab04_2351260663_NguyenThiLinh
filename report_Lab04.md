@@ -77,9 +77,9 @@ $$X(z) = E(z) \cdot H(z) = E(z) \cdot \frac{B(z)}{A(z)} = E(z) \cdot \frac{b_0 +
 
 ### 2.4. Bài toán Chọn đơn vị (Unit Selection) và Hàm Chi phí
 
-Chuỗi đơn vị tối ưu $\theta^* = (\theta_1, \theta_2, \dots, \theta_J)$ được lựa chọn từ tập ứng viên trong inventory sao cho cực tiểu hóa hàm mục tiêu:
+Chuỗi đơn vị tối ưu $\theta^{\ast} = (\theta_1, \theta_2, \dots, \theta_J)$ được lựa chọn từ tập ứng viên trong inventory sao cho cực tiểu hóa hàm mục tiêu:
 
-$$\theta^* = \arg\min_{\theta_1, \dots, \theta_J} \left[ \sum_{j=1}^J C_{target}(\theta_j, t_j) + \lambda \sum_{j=1}^{J-1} C_{join}(\theta_j, \theta_{j+1}) \right]$$
+$$\theta^{\ast} = \arg\min_{\theta_1, \dots, \theta_J} \left[ \sum_{j=1}^J C_{target}(\theta_j, t_j) + \lambda \sum_{j=1}^{J-1} C_{join}(\theta_j, \theta_{j+1}) \right]$$
 
 Trong đó:
 
@@ -93,16 +93,22 @@ $$D_{spec} = \frac{1}{K} \sum_{k=1}^K \left[ L_{left}[k] - L_{right}[k] \right]^
 
 $$C_{join}(\theta_j, \theta_{j+1}) = D_{spec} + w_r \cdot |\text{RMS}_{left} - \text{RMS}_{right}|$$
 
-
 ### 2.5. Kỹ thuật Làm mượt biên Cross-fade
+
 Để triệt tiêu xung nhọn (click) và gián đoạn pha/biên độ tại điểm nối giữa 2 đoạn âm thanh $x_1$ và $x_2$, kỹ thuật làm mượt Cross-fade trong vùng chồng lấn $N$ mẫu áp dụng hàm dốc tuyến tính $\alpha[n] = \frac{n}{N-1}$ ($0 \le n < N$):
-$$y[n] = (1 - \alpha[n]) x_1[\text{len}_1 - N + n] + \alpha[n] x_2[n]$$
+
+$$y[n] = (1 - \alpha[n]) \cdot x_1[\text{len}_1 - N + n] + \alpha[n] \cdot x_2[n]$$
 
 ### 2.6. Thuật toán sinh tham số HMM (MLPG)
+
 Trong tổng hợp tham số HMM, vector quan sát bao gồm hệ số tĩnh và hệ số động học: $O_t = [c_t, \Delta c_t]^T$.
-Nghiệm quỹ đạo tham số tối ưu $C^*$ thỏa mãn điều kiện hợp lý cực đại (Maximum Likelihood Parameter Generation - Tokuda et al.):
-$$C^* = \arg\max_C P(W C \mid \lambda, Q) \implies (W^T U^{-1} W) C^* = W^T U^{-1} M$$
-Nhờ ma trận biến đổi động $W$ chứa các hệ số ràng buộc vi phân $\Delta c_t = \frac{1}{2}(c_{t+1} - c_{t-1})$, quỹ đạo tham số $C^*$ sinh ra biến thiên trơn tru qua các biên trạng thái thay vì nhảy bậc từng nấc.
+
+Nghiệm quỹ đạo tham số tối ưu $C^{\ast}$ thỏa mãn điều kiện hợp lý cực đại (Maximum Likelihood Parameter Generation - Tokuda et al.):
+
+$$C^{\ast} = \arg\max_C P(W C \mid \lambda, Q) \implies (W^T U^{-1} W) C^{\ast} = W^T U^{-1} M$$
+
+Nhờ ma trận biến đổi động $W$ chứa các hệ số ràng buộc vi phân $\Delta c_t = \frac{1}{2}(c_{t+1} - c_{t-1})$, quỹ đạo tham số $C^{\ast}$ sinh ra biến thiên trơn tru qua các biên trạng thái thay vì nhảy bậc từng nấc.
+
 
 ---
 
@@ -192,7 +198,8 @@ $$\text{DP}[0][c] = C_{target}(c, t_0)$$
 
 $$\text{DP}[t][c_{curr}] = \min_{c_{prev}} \left[ \text{DP}[t-1][c_{prev}] + C_{target}(c_{curr}, t_t) + \lambda \cdot C_{join}(c_{prev}, c_{curr}) \right]$$
 
-* **Bước 3: Truy hồi ngược (Backtracking)** để tìm chuỗi ứng viên $\theta^*$ có tổng chi phí nhỏ nhất.
+* **Bước 3: Truy hồi ngược (Backtracking)** để tìm chuỗi ứng viên $\theta^{\ast}$ có tổng chi phí nhỏ nhất.
+
 
 
 **Kết quả lựa chọn ứng viên cho câu thử nghiệm:**
