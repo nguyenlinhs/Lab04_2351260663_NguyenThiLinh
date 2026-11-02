@@ -76,14 +76,23 @@ $$X(z) = E(z) \cdot H(z) = E(z) \cdot \frac{B(z)}{A(z)} = E(z) \cdot \frac{b_0 +
 * **Bộ lọc thanh đạo $H(z)$:** Bộ lọc all-pole tạo ra các đỉnh cộng hưởng tần số gọi là các **Formant** ($F_1, F_2, F_3$).
 
 ### 2.4. Bài toán Chọn đơn vị (Unit Selection) và Hàm Chi phí
+
 Chuỗi đơn vị tối ưu $\theta^* = (\theta_1, \theta_2, \dots, \theta_J)$ được lựa chọn từ tập ứng viên trong inventory sao cho cực tiểu hóa hàm mục tiêu:
+
 $$\theta^* = \arg\min_{\theta_1, \dots, \theta_J} \left[ \sum_{j=1}^J C_{target}(\theta_j, t_j) + \lambda \sum_{j=1}^{J-1} C_{join}(\theta_j, \theta_{j+1}) \right]$$
+
 Trong đó:
+
 * **Target cost $C_{target}(\theta_j, t_j)$:** Đo mức độ phù hợp giữa ứng viên $\theta_j$ với mục tiêu $t_j$ (về thời lượng và mức năng lượng RMS):
-  $$C_{target} = w_d |d_{\theta} - d_{target}| + w_e |\text{RMS}_{\theta} - \text{RMS}_{target}|$$
+
+$$C_{target}(\theta_j, t_j) = w_d \cdot |d_{\theta} - d_{target}| + w_e \cdot |\text{RMS}_{\theta} - \text{RMS}_{target}|$$
+
 * **Join cost $C_{join}(\theta_j, \theta_{j+1})$:** Đo độ sai lệch âm học tại biên nối giữa điểm cuối của unit $\theta_j$ và điểm đầu của unit $\theta_{j+1}$. Sử dụng độ lệch bình phương trung bình chuẩn hóa của phổ logarit ($D_{spec}$) kết hợp độ lệch RMS:
-  $$D_{spec} = \frac{1}{K} \sum_{k=1}^K [L_{left}[k] - L_{right}[k]]^2$$
-  $$C_{join}(\theta_j, \theta_{j+1}) = D_{spec} + w_r |\text{RMS}_{left} - \text{RMS}_{right}|$$
+
+$$D_{spec} = \frac{1}{K} \sum_{k=1}^K \left[ L_{left}[k] - L_{right}[k] \right]^2$$
+
+$$C_{join}(\theta_j, \theta_{j+1}) = D_{spec} + w_r \cdot |\text{RMS}_{left} - \text{RMS}_{right}|$$
+
 
 ### 2.5. Kỹ thuật Làm mượt biên Cross-fade
 Để triệt tiêu xung nhọn (click) và gián đoạn pha/biên độ tại điểm nối giữa 2 đoạn âm thanh $x_1$ và $x_2$, kỹ thuật làm mượt Cross-fade trong vùng chồng lấn $N$ mẫu áp dụng hàm dốc tuyến tính $\alpha[n] = \frac{n}{N-1}$ ($0 \le n < N$):
@@ -154,11 +163,12 @@ File `metadata.csv` được tự động ghi nhận đầy đủ các trường
 ## 4. Thực nghiệm Ghép nối Cơ sở - Baseline Concatenation (Phần B)
 
 ### 4.1. Quy trình thực hiện
-* Câu thử nghiệm: `"Mời khách hàng số 23 đến quầy 5."`
-* Hàm `normalize_text()` xử lý chuỗi:
-  $$\text{"Mời khách hàng số 23 đến quầy 5."} \longrightarrow \text{['mời', 'khách', 'hàng', 'số', 'hai', 'ba', 'đến', 'quầy', 'năm']}$$
-* Hệ thống Baseline cố định chọn Candidate 01 cho toàn bộ 9 token, thực hiện nối trực tiếp các mảng numpy (`np.concatenate`) không áp dụng cross-fade (`xfade = 0`).
-* Kết quả lưu vào file `audio_output/raw_concat.wav` (thời lượng $4.97\text{s}$, tần số $16000\text{ Hz}$).
+
+* **Câu thử nghiệm:** `"Mời khách hàng số 23 đến quầy 5."`
+* **Chuẩn hóa chuỗi văn bản qua `normalize_text()`:**
+  `"Mời khách hàng số 23 đến quầy 5."` $\longrightarrow$ `['mời', 'khách', 'hàng', 'số', 'hai', 'ba', 'đến', 'quầy', 'năm']`
+* **Hệ thống Baseline:** Cố định chọn Candidate 01 cho toàn bộ 9 token, thực hiện nối trực tiếp các mảng numpy (`np.concatenate`) không áp dụng cross-fade (`xfade = 0`).
+* **Kết quả:** Lưu vào file [`audio_output/raw_concat.wav`](file:///d:/xuliamthanh/Lab04_2351260663_NguyenThiLinh/audio_output/raw_concat.wav) (thời lượng $4.97\text{ s}$, tần số $16000\text{ Hz}$).
 
 ### 4.2. Phân tích hiện tượng lỗi tại biên nối (Boundary Discontinuity)
 Khi phân tích dạng sóng (*Waveform*) và phổ biên độ (*Spectrogram*) của bản ghép thô (xem hai đồ thị A và B trên Hình 2):
@@ -171,10 +181,19 @@ Khi phân tích dạng sóng (*Waveform*) và phổ biên độ (*Spectrogram*) 
 ## 5. Tối ưu hóa Chọn đơn vị và Làm mượt biên - Unit Selection & Smoothing (Phần C)
 
 ### 5.1. Thuật toán Quy hoạch động Viterbi
-Để giải quyết bài toán tìm đường đi tối ưu qua lưới ứng viên, thuật toán Viterbi DP được thực hiện:
-* Khởi tạo: $\text{DP}[0][c] = C_{target}(c, t_0)$
-* Quy nạp: $\text{DP}[t][c_{curr}] = \min_{c_{prev}} \left\{ \text{DP}[t-1][c_{prev}] + C_{target}(c_{curr}, t_t) + \lambda \cdot C_{join}(c_{prev}, c_{curr}) \right\}$
-* Truy hồi ngược (Backtracking) để tìm chuỗi Candidate tối ưu.
+
+Để giải quyết bài toán tìm đường đi tối ưu qua lưới ứng viên, thuật toán Viterbi DP được thực hiện qua các bước:
+
+* **Bước 1: Khởi tạo (Initialization)**
+
+$$\text{DP}[0][c] = C_{target}(c, t_0)$$
+
+* **Bước 2: Quy nạp (Induction)**
+
+$$\text{DP}[t][c_{curr}] = \min_{c_{prev}} \left[ \text{DP}[t-1][c_{prev}] + C_{target}(c_{curr}, t_t) + \lambda \cdot C_{join}(c_{prev}, c_{curr}) \right]$$
+
+* **Bước 3: Truy hồi ngược (Backtracking)** để tìm chuỗi ứng viên $\theta^*$ có tổng chi phí nhỏ nhất.
+
 
 **Kết quả lựa chọn ứng viên cho câu thử nghiệm:**
 * Tổng chi phí toàn cục: $\text{Total Cost} = 4055.99$
@@ -205,17 +224,19 @@ Sau khi có chuỗi ứng viên tối ưu, áp dụng Cross-fade ở mức $15\t
 ## 6. Phân tích Ngữ điệu và Mô hình Nguồn - Lọc (Phần D)
 
 ### 6.1. Đo đạc thực nghiệm $F_0$ trên âm hữu thanh
+
 Thực hiện trích xuất một đoạn âm hữu thanh (nguyên âm /a/ trong từ `"hai_01.wav"`), sử dụng hàm tự tương quan $R_{xx}(\tau)$:
-$$R_{xx}(\tau) = \sum_{n} x[n] x[n+\tau]$$
+
+$$R_{xx}(\tau) = \sum_{n} x[n] \cdot x[n+\tau]$$
 
 ![Hình 3: Phân tích Prosody và Mô hình Nguồn - Lọc](figures/fig3_prosody_pitch_duration.png)
 
 * **Kết quả đo đạc:**
   * Tần số lấy mẫu: $F_s = 16000\text{ Hz}$.
   * Vị trí đỉnh tự tương quan thứ nhất: $N_p = 103$ mẫu (tương ứng chu kỳ cơ bản $T_0 = 103 / 16000 \approx 6.44\text{ ms}$).
-  * Tần số cơ bản ước lượng:
-    $$F_0 = \frac{F_s}{N_p} = \frac{16000}{103} \approx 155.34\text{ Hz}$$
+  * Tần số cơ bản ước lượng: $F_0 = \frac{F_s}{N_p} = \frac{16000}{103} \approx 155.34\text{ Hz}$.
   * Giá trị này hoàn toàn trùng khớp với vùng tần số giọng nói nam/nữ trung bình tiếng Việt ($140 - 180\text{ Hz}$) và kiểm chứng chính xác công thức lý thuyết $F_0 \approx F_s / N_p$.
+
 
 ### 6.2. Thực nghiệm Biến đổi Cao độ và Thời lượng
 1. **Dịch cao độ (Pitch Shift):**
@@ -362,8 +383,11 @@ Khi áp dụng cửa sổ Cross-fade quá dài (ví dụ $> 30\text{ ms}$), vùn
 ### Câu 4: Giải thích bằng Source-Filter model vì sao thay $F_0$ không đồng nghĩa với thay formant.
 **Trả lời:**
 Theo mô hình Nguồn - Lọc (Source - Filter Model):
+
 $$X(\omega) = E(\omega) \cdot H(\omega)$$
+
 * **Nguồn kích thích $E(\omega)$ (Source):** Được sinh ra từ sự rung động của dây thanh âm tại thanh quản. Tần số rung này quyết định **tần số cơ bản $F_0$** và các vạch điều hòa bội số của nó ($k \cdot F_0$).
+
 * **Bộ lọc thanh đạo $H(\omega)$ (Filter):** Được định hình bởi khoang họng, khoang miệng, lưỡi, môi và mũi. Hình học của thanh đạo tạo ra các tần số cộng hưởng tự nhiên gọi là **Formant** ($F_1, F_2, F_3$), quyết định âm sắc (*timbre*) và đặc trưng của nguyên âm.
 * **Kết luận:**
   $F_0$ thuộc về **Nguồn**, còn Formant thuộc về **Bộ lọc**. Hai thành phần này độc lập với nhau về mặt vật lý. Khi ta thay đổi $F_0$ (nói giọng cao hơn hoặc trầm hơn), ta chỉ thay đổi tần số dao động của dây thanh âm, trong khi hình dáng khoang miệng (thanh đạo) giữ nguyên thì các tần số Formant hoàn toàn không đổi. Nếu thay đổi $F_0$ mà kéo theo thay đổi cả Formant (như khi tăng tốc băng cassette), giọng nói sẽ bị biến dạng thành giọng trẻ con/chuột sóc (*chipmunk effect*).
@@ -381,8 +405,11 @@ $$X(\omega) = E(\omega) \cdot H(\omega)$$
 **Trả lời:**
 Nếu HMM chỉ sử dụng các đặc trưng tĩnh (Static features $c_t$), tại mỗi trạng thái $q$, giá trị sinh ra tối ưu chỉ đơn giản là vector kỳ vọng $\mu_q$ của trạng thái đó. Khi mô hình chuyển từ trạng thái $q_1$ sang trạng thái $q_2$, giá trị tham số sẽ nhảy nấc đột ngột từ $\mu_{q_1}$ sang $\mu_{q_2}$, tạo ra quỹ đạo dạng bậc thang rời rạc, làm âm thanh sinh ra bị giật và rè.
 Khi bổ sung các đặc trưng động học vi phân ($\Delta c_t = \frac{1}{2}(c_{t+1} - c_{t-1})$ và $\Delta^2 c_t$), bài toán tối ưu hóa chuyển thành giải hệ phương trình ràng buộc toàn cục:
+
 $$(W^T U^{-1} W) C = W^T U^{-1} M$$
-Trong đó ma trận $W$ liên kết chặt chẽ giá trị của các khung lân cận. Điều này ép buộc tham số tại khung hiện tại vừa phải gần với phân bố của trạng thái, vừa phải thỏa mãn tốc độ biến thiên liên tục so với khung trước và khung sau. Nhờ vậy, quỹ đạo sinh ra (MLPG) trở thành một đường cong mượt mà, trơn tru qua mọi ranh giới trạng thái.
+
+Trong đó ma trận $W$ liên kết chặt chẽ giá trị của các khung lân cận.
+ Điều này ép buộc tham số tại khung hiện tại vừa phải gần với phân bố của trạng thái, vừa phải thỏa mãn tốc độ biến thiên liên tục so với khung trước và khung sau. Nhờ vậy, quỹ đạo sinh ra (MLPG) trở thành một đường cong mượt mà, trơn tru qua mọi ranh giới trạng thái.
 
 ### Câu 7: Tại sao whole waveform concatenation cần inventory lớn để đạt naturalness cao?
 **Trả lời:**
